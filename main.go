@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -17,7 +18,13 @@ import (
 
 const version = "0.1"
 
+var (
+	host = flag.String("h", "127.0.0.1", "host")
+	port = flag.String("P", "4000", "port")
+)
+
 func main() {
+	flag.Parse()
 	err := ui.Init()
 	if err != nil {
 		panic(err)
@@ -40,7 +47,8 @@ type record struct {
 }
 
 func fetchProcessInfo() string {
-	db, err := sql.Open("mysql", "root:@tcp(127.0.0.1:4000)/INFORMATION_SCHEMA")
+	dsn := fmt.Sprintf("root:@tcp(%s:%s)/INFORMATION_SCHEMA", *host, *port)
+	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		panic(err.Error())
 	}
