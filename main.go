@@ -103,7 +103,7 @@ func fetchProcessInfo() string {
 		if r.dbName != nil {
 			dbName = string(r.dbName.([]byte))
 		}
-		_, _ = fmt.Fprintf(&sb, "%-6d  %-20s  %-20s  %-20s  %-7s  %-6d  %-15s  %-15s\n",
+		_, _ = fmt.Fprintf(&sb, "%-6d  %-20s  %-20s  %-20s  %-7s  %-6d  %-8s  %-15s\n",
 			r.id, r.user, r.host, dbName, r.command, r.time, r.state, sqlText)
 	}
 
