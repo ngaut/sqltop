@@ -20,7 +20,9 @@ const version = "0.1"
 
 var (
 	host = flag.String("h", "127.0.0.1", "host")
-	port = flag.String("P", "4000", "port")
+	pwd  = flag.String("p", "", "pwd")
+	user = flag.String("u", "root", "user")
+	port = flag.Int("P", 3306, "port")
 )
 
 func main() {
@@ -41,19 +43,19 @@ func cleanExit() {
 }
 
 type record struct {
-	id, mem, time, state        int
-	user, host, dbName, command string
-	sqlText                     interface{}
+	id, time                   int
+	state, user, host, command string
+	sqlText, dbName            interface{}
 }
 
 func fetchProcessInfo() string {
-	dsn := fmt.Sprintf("root:@tcp(%s:%s)/INFORMATION_SCHEMA", *host, *port)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/INFORMATION_SCHEMA", *user, *pwd, *host, *port)
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		panic(err.Error())
 	}
 	defer db.Close()
-	q := fmt.Sprintf("select ID, USER, HOST, DB, COMMAND, TIME, STATE, MEM, info  from PROCESSLIST")
+	q := fmt.Sprintf("select ID, USER, HOST, DB, COMMAND, TIME, STATE, info  from PROCESSLIST")
 	rows, err := db.Query(q)
 	if err != nil {
 		log.Fatal(err)
@@ -61,20 +63,20 @@ func fetchProcessInfo() string {
 	defer rows.Close()
 
 	totalProcesses := 0
-	totalMem := 0
 	usingDBs := make(map[string]struct{})
 
 	var records []record
 	for rows.Next() {
 		var r record
-		err := rows.Scan(&r.id, &r.user, &r.host, &r.dbName, &r.command, &r.time, &r.state, &r.mem, &r.sqlText)
+		err := rows.Scan(&r.id, &r.user, &r.host, &r.dbName, &r.command, &r.time, &r.state, &r.sqlText)
 		if err != nil {
 			log.Fatal(err)
 		}
-		usingDBs[strings.ToLower(r.dbName)] = struct{}{}
+		if r.dbName != nil {
+			usingDBs[strings.ToLower(string(r.dbName.([]byte)))] = struct{}{}
+		}
 		records = append(records, r)
 		totalProcesses++
-		totalMem += r.mem
 	}
 	err = rows.Err()
 	if err != nil {
@@ -82,11 +84,11 @@ func fetchProcessInfo() string {
 	}
 
 	info := "sqltop version 0.1"
-	info += "\nProcesses: %d total, running: %d  Memory: %d,  using DB: %d\n"
-	text := fmt.Sprintf(info, totalProcesses, totalProcesses, totalMem, len(usingDBs))
+	info += "\nProcesses: %d total, running: %d,  using DB: %d\n"
+	text := fmt.Sprintf(info, totalProcesses, totalProcesses, len(usingDBs))
 	text += fmt.Sprintf("\n\ndetails\n")
 
-	text += fmt.Sprintf("ID      USER         HOST            DB                COMMAND   TIME     STATE  MEM      SQL\n")
+	text += fmt.Sprintf("ID      USER                      HOST                DB                COMMAND   TIME     STATE     SQL\n")
 
 	var sb strings.Builder
 	for _, r := range records {
@@ -97,8 +99,12 @@ func fetchProcessInfo() string {
 				sqlText = sqlText[:128]
 			}
 		}
-		_, _ = fmt.Fprintf(&sb, "%-6d  %-10s  %-12s  %-20s  %-8s  %-6d  %-6d  %-6d %-10s\n",
-			r.id, r.user, r.host, r.dbName, r.command, r.time, r.state, r.mem, sqlText)
+		dbName := ""
+		if r.dbName != nil {
+			dbName = string(r.dbName.([]byte))
+		}
+		_, _ = fmt.Fprintf(&sb, "%-6d  %-20s  %-20s  %-20s  %-7s  %-6d  %-15s  %-15s\n",
+			r.id, r.user, r.host, dbName, r.command, r.time, r.state, sqlText)
 	}
 
 	return text + sb.String()
