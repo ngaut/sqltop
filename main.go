@@ -55,7 +55,7 @@ func fetchProcessInfo() string {
 		panic(err.Error())
 	}
 	defer db.Close()
-	q := fmt.Sprintf("select ID, USER, HOST, DB, COMMAND, TIME, STATE, info  from PROCESSLIST")
+	q := fmt.Sprintf("select ID, USER, HOST, DB, COMMAND, TIME, STATE, info from PROCESSLIST where command != 'Sleep' order by TIME desc")
 	rows, err := db.Query(q)
 	if err != nil {
 		log.Fatal(err)
