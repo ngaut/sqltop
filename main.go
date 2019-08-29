@@ -19,10 +19,11 @@ import (
 const version = "0.1"
 
 var (
-	host = flag.String("h", "127.0.0.1", "host")
-	pwd  = flag.String("p", "", "pwd")
-	user = flag.String("u", "root", "user")
-	port = flag.Int("P", 3306, "port")
+	host  = flag.String("h", "127.0.0.1", "host")
+	pwd   = flag.String("p", "", "pwd")
+	user  = flag.String("u", "root", "user")
+	port  = flag.Int("P", 3306, "port")
+	count = flag.Int("n", 50, "Number of process to show")
 )
 
 func main() {
@@ -55,7 +56,7 @@ func fetchProcessInfo() string {
 		panic(err.Error())
 	}
 	defer db.Close()
-	q := fmt.Sprintf("select ID, USER, HOST, DB, COMMAND, TIME, STATE, info from PROCESSLIST where command != 'Sleep' order by TIME desc")
+	q := fmt.Sprintf("select ID, USER, HOST, DB, COMMAND, TIME, STATE, info from PROCESSLIST where command != 'Sleep' order by TIME desc limit %d", *count)
 	rows, err := db.Query(q)
 	if err != nil {
 		log.Fatal(err)
@@ -86,7 +87,7 @@ func fetchProcessInfo() string {
 	info := "sqltop version 0.1"
 	info += "\nProcesses: %d total, running: %d,  using DB: %d\n"
 	text := fmt.Sprintf(info, totalProcesses, totalProcesses, len(usingDBs))
-	text += fmt.Sprintf("\n\ndetails\n")
+	text += fmt.Sprintf("\n\nTop %d order by time desc:\n", *count)
 
 	text += fmt.Sprintf("ID      USER                      HOST                DB                COMMAND   TIME     STATE     SQL\n")
 
