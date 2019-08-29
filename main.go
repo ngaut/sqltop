@@ -44,9 +44,10 @@ func cleanExit() {
 }
 
 type record struct {
-	id, time                   int
-	state, user, host, command string
-	sqlText, dbName            interface{}
+	id, time            int
+	user, host, command string
+	state               sql.NullString
+	sqlText, dbName     interface{}
 }
 
 func fetchProcessInfo() string {
@@ -105,7 +106,7 @@ func fetchProcessInfo() string {
 			dbName = string(r.dbName.([]byte))
 		}
 		_, _ = fmt.Fprintf(&sb, "%-6d  %-20s  %-20s  %-20s  %-7s  %-6d  %-8s  %-15s\n",
-			r.id, r.user, r.host, dbName, r.command, r.time, r.state, sqlText)
+			r.id, r.user, r.host, dbName, r.command, r.time, r.state.String, sqlText)
 	}
 
 	return text + sb.String()
