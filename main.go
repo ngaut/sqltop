@@ -37,9 +37,13 @@ func main() {
 	refreshUI()
 }
 
-func cleanExit() {
+func cleanExit(err error) {
 	ui.Close()
 	exec.Command("clear").Run()
+	if err != nil {
+		log.Print(err)
+	}
+
 	os.Exit(0)
 }
 
@@ -53,13 +57,13 @@ func fetchProcessInfo() string {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/INFORMATION_SCHEMA", *user, *pwd, *host, *port)
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		panic(err.Error())
+		cleanExit(err)
 	}
 	defer db.Close()
 	q := fmt.Sprintf("select ID, USER, HOST, DB, COMMAND, TIME, STATE, info from PROCESSLIST where command != 'Sleep' order by TIME desc limit %d", *count)
 	rows, err := db.Query(q)
 	if err != nil {
-		log.Fatal(err)
+		cleanExit(err)
 	}
 	defer rows.Close()
 
@@ -71,7 +75,7 @@ func fetchProcessInfo() string {
 		var r record
 		err := rows.Scan(&r.id, &r.user, &r.host, &r.dbName, &r.command, &r.time, &r.state, &r.sqlText)
 		if err != nil {
-			log.Fatal(err)
+			cleanExit(err)
 		}
 		if r.dbName.Valid {
 			usingDBs[strings.ToLower(r.dbName.String)] = struct{}{}
@@ -81,7 +85,7 @@ func fetchProcessInfo() string {
 	}
 	err = rows.Err()
 	if err != nil {
-		log.Fatal(err)
+		cleanExit(err)
 	}
 
 	info := "sqltop version 0.1"
@@ -137,7 +141,7 @@ func refreshUI() {
 		select {
 		case e := <-evt:
 			if e.Type == ui.EventKey && (e.Ch == 'q' || e.Key == ui.KeyCtrlC) {
-				cleanExit()
+				cleanExit(nil)
 			}
 
 		case <-redraw:
