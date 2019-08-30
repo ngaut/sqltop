@@ -44,9 +44,9 @@ func cleanExit() {
 }
 
 type record struct {
-	id, time                   int
-	state, user, host, command string
-	sqlText, dbName            interface{}
+	id, time               int
+	user, host, command    string
+	dbName, state, sqlText sql.NullString
 }
 
 func fetchProcessInfo() string {
@@ -73,8 +73,8 @@ func fetchProcessInfo() string {
 		if err != nil {
 			log.Fatal(err)
 		}
-		if r.dbName != nil {
-			usingDBs[strings.ToLower(string(r.dbName.([]byte)))] = struct{}{}
+		if r.dbName.Valid {
+			usingDBs[strings.ToLower(r.dbName.String)] = struct{}{}
 		}
 		records = append(records, r)
 		totalProcesses++
@@ -94,18 +94,14 @@ func fetchProcessInfo() string {
 	var sb strings.Builder
 	for _, r := range records {
 		var sqlText string
-		if r.sqlText != nil {
-			sqlText = fmt.Sprintf("%s", r.sqlText)
+		if r.sqlText.Valid {
+			sqlText = r.sqlText.String
 			if len(sqlText) > 128 {
 				sqlText = sqlText[:128]
 			}
 		}
-		dbName := ""
-		if r.dbName != nil {
-			dbName = string(r.dbName.([]byte))
-		}
 		_, _ = fmt.Fprintf(&sb, "%-6d  %-20s  %-20s  %-20s  %-7s  %-6d  %-8s  %-15s\n",
-			r.id, r.user, r.host, dbName, r.command, r.time, r.state, sqlText)
+			r.id, r.user, r.host, r.dbName.String, r.command, r.time, r.state.String, sqlText)
 	}
 
 	return text + sb.String()
