@@ -9,7 +9,8 @@ import (
 	"strings"
 	"time"
 
-	ui "gopkg.in/gizak/termui.v1"
+	ui "github.com/gizak/termui/v3"
+	"github.com/gizak/termui/v3/widgets"
 
 	"database/sql"
 
@@ -28,8 +29,7 @@ var (
 
 func main() {
 	flag.Parse()
-	err := ui.Init()
-	if err != nil {
+	if err := ui.Init(); err != nil {
 		panic(err)
 	}
 	defer ui.Close()
@@ -92,8 +92,7 @@ func fetchProcessInfo() string {
 	info += "\nProcesses: %d total, running: %d,  using DB: %d\n"
 	text := fmt.Sprintf(info, totalProcesses, totalProcesses, len(usingDBs))
 	text += fmt.Sprintf("\n\nTop %d order by time desc:\n", *count)
-
-	text += fmt.Sprintf("ID      USER                      HOST                DB                COMMAND   TIME     STATE     SQL\n")
+	text += fmt.Sprintf("%-6s  %-20s  %-20s  %-20s  %-7s  %-6s  %-8s  %-15s\n", "ID", "USER", "HOST", "DB", "COMMAND", "TIME", "STATE", "SQL")
 
 	var sb strings.Builder
 	for _, r := range records {
@@ -113,17 +112,19 @@ func fetchProcessInfo() string {
 
 // refreshUI periodically refreshes the screen.
 func refreshUI() {
-	par := ui.NewPar("")
-	par.HasBorder = false
-	par.Height = ui.TermHeight()
-	par.Width = ui.TermWidth()
+	termWidth, termHeight := ui.TerminalDimensions()
 
-	topViewGrid := ui.NewGrid(ui.NewRow(ui.NewCol(ui.TermWidth(), 0, par)))
+	par := widgets.NewParagraph()
+	par.Border = false
+	par.SetRect(0, 0, termWidth, termHeight)
+
+	grid := ui.NewGrid()
+	grid.SetRect(0, 0, termWidth, termHeight)
+	grid.Set(
+		ui.NewRow(1.0, ui.NewCol(1.0, par)),
+	)
 
 	// Start with the topviewGrid by default
-	ui.Body.Rows = topViewGrid.Rows
-	ui.Body.Align()
-
 	redraw := make(chan struct{})
 
 	go func() {
@@ -136,16 +137,16 @@ func refreshUI() {
 		}
 	}()
 
-	evt := ui.EventCh()
+	evt := ui.PollEvents()
 	for {
 		select {
 		case e := <-evt:
-			if e.Type == ui.EventKey && (e.Ch == 'q' || e.Key == ui.KeyCtrlC) {
+			if e.Type == ui.KeyboardEvent && (e.ID == "q" || e.ID == "<C-c>") {
 				cleanExit(nil)
 			}
 
 		case <-redraw:
-			ui.Render(ui.Body)
+			ui.Render(grid)
 		}
 	}
 }
