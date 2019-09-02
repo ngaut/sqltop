@@ -43,7 +43,6 @@ func cleanExit(err error) {
 	if err != nil {
 		log.Print(err)
 	}
-
 	os.Exit(0)
 }
 
@@ -124,7 +123,6 @@ func refreshUI() {
 		ui.NewRow(1.0, ui.NewCol(1.0, par)),
 	)
 
-	// Start with the topviewGrid by default
 	redraw := make(chan struct{})
 
 	go func() {
@@ -143,6 +141,11 @@ func refreshUI() {
 		case e := <-evt:
 			if e.Type == ui.KeyboardEvent && (e.ID == "q" || e.ID == "<C-c>") {
 				cleanExit(nil)
+			}
+			if e.ID == "<Resize>" {
+				payload := e.Payload.(ui.Resize)
+				grid.SetRect(0, 0, payload.Width, payload.Height)
+				ui.Render(grid)
 			}
 
 		case <-redraw:
