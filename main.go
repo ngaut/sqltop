@@ -10,7 +10,6 @@ import (
 	"time"
 
 	ui "github.com/gizak/termui/v3"
-	"github.com/gizak/termui/v3/widgets"
 
 	"database/sql"
 
@@ -91,7 +90,8 @@ func fetchProcessInfo() string {
 	info += "\nProcesses: %d total, running: %d,  using DB: %d\n"
 	text := fmt.Sprintf(info, totalProcesses, totalProcesses, len(usingDBs))
 	text += fmt.Sprintf("\n\nTop %d order by time desc:\n", *count)
-	text += fmt.Sprintf("%-6s  %-20s  %-20s  %-20s  %-7s  %-6s  %-8s  %-15s\n", "ID", "USER", "HOST", "DB", "COMMAND", "TIME", "STATE", "SQL")
+	text += fmt.Sprintf("%-6s  %-20s  %-20s  %-20s  %-7s  %-6s  %-8s  %-15s\n",
+		"ID", "USER", "HOST", "DB", "COMMAND", "TIME", "STATE", "SQL")
 
 	var sb strings.Builder
 	for _, r := range records {
@@ -111,23 +111,12 @@ func fetchProcessInfo() string {
 
 // refreshUI periodically refreshes the screen.
 func refreshUI() {
-	termWidth, termHeight := ui.TerminalDimensions()
-
-	par := widgets.NewParagraph()
-	par.Border = false
-	par.SetRect(0, 0, termWidth, termHeight)
-
-	grid := ui.NewGrid()
-	grid.SetRect(0, 0, termWidth, termHeight)
-	grid.Set(
-		ui.NewRow(1.0, ui.NewCol(1.0, par)),
-	)
+	pg := newProcessListGrid()
 
 	redraw := make(chan struct{})
-
 	go func() {
 		for {
-			par.Text = fetchProcessInfo()
+			pg.SetText(fetchProcessInfo())
 
 			redraw <- struct{}{}
 			// update every 2 seconds
@@ -144,12 +133,11 @@ func refreshUI() {
 			}
 			if e.ID == "<Resize>" {
 				payload := e.Payload.(ui.Resize)
-				grid.SetRect(0, 0, payload.Width, payload.Height)
-				ui.Render(grid)
+				pg.OnResize(payload)
 			}
 
 		case <-redraw:
-			ui.Render(grid)
+			pg.Render()
 		}
 	}
 }
