@@ -58,13 +58,17 @@ func cleanExit(err error) {
 
 // refreshUI periodically refreshes the screen.
 func refreshUI() {
-	pg := newProcessListGrid()
-	hotspots := newHotSpotGrids()
+	controllers := []UIController{
+		newProcessListController(),
+		//newHotSpotsController(),
+	}
 
 	redraw := make(chan struct{})
 	go func() {
 		for {
-			pg.SetText(fetchProcessInfo())
+			for _, c := range controllers {
+				c.UpdateData()
+			}
 
 			redraw <- struct{}{}
 			// update every 2 seconds
@@ -80,14 +84,15 @@ func refreshUI() {
 				cleanExit(nil)
 			}
 			if e.ID == "<Resize>" {
-				payload := e.Payload.(ui.Resize)
-				pg.OnResize(payload)
-				hotspots.OnResize(payload)
+				for _, c := range controllers {
+					c.OnResize(e.Payload.(ui.Resize))
+				}
 			}
 
 		case <-redraw:
-			pg.Render()
-			hotspots.Render()
+			for _, c := range controllers {
+				c.Render()
+			}
 		}
 	}
 }

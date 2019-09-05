@@ -5,6 +5,12 @@ import (
 	"github.com/gizak/termui/v3/widgets"
 )
 
+type UIController interface {
+	Render()
+	OnResize(ui.Resize)
+	UpdateData()
+}
+
 type ProcessListGrid struct {
 	grid *ui.Grid
 	par  *widgets.Paragraph

@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-	"sync"
+	ui "github.com/gizak/termui/v3"
 )
 
 type ProcessRecord struct {
@@ -15,18 +15,29 @@ type ProcessRecord struct {
 
 type ProcessListController struct {
 	grid *ProcessListGrid
-	data *[]ProcessRecord
-	mu   sync.RWMutex
 }
 
+func newProcessListController() UIController {
+	ret := &ProcessListController{
+		grid: newProcessListGrid(),
+	}
+	return ret
+}
+
+
 func (c *ProcessListController) Render() {
+	c.grid.Render()
+}
+
+func (c *ProcessListController) OnResize(payload ui.Resize) {
+	c.grid.OnResize(payload)
 }
 
 func (c *ProcessListController) UpdateData() {
-
+	c.grid.SetText(c.fetchProcessInfo())	
 }
 
-func fetchProcessInfo() string {
+func (c *ProcessListController) fetchProcessInfo() string {
 	ds := getDataSource()
 	q := fmt.Sprintf("select ID, USER, HOST, DB, COMMAND, TIME, STATE, info from PROCESSLIST where command != 'Sleep' order by TIME desc limit %d", *count)
 	rows, err := ds.Query(q)
@@ -38,9 +49,9 @@ func fetchProcessInfo() string {
 	totalProcesses := 0
 	usingDBs := make(map[string]struct{})
 
-	var records []record
+	var records []ProcessRecord
 	for rows.Next() {
-		var r record
+		var r ProcessRecord
 		err := rows.Scan(&r.id, &r.user, &r.host, &r.dbName, &r.command, &r.time, &r.state, &r.sqlText)
 		if err != nil {
 			cleanExit(err)
