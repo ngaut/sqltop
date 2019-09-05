@@ -50,7 +50,7 @@ func (ds *DataSource) Connect() error {
 	var err error
 	ds.db, err = sql.Open("mysql", dsn)
 	if err != nil {
-		return errors.Trace(err)
+		return err
 	}
 	return nil
 }
@@ -75,5 +75,5 @@ func (ds *DataSource) Query(query string, args ...interface{}) (*sql.Rows, error
 			return ret, nil
 		}
 	}
-	return nil, errors.Trace(err)
+	return nil, err
 }
