@@ -55,13 +55,10 @@ func (ds *DataSource) Connect() error {
 	return nil
 }
 
+// make sure call Connect() before calling Query()
 func (ds *DataSource) Query(query string, args ...interface{}) (*sql.Rows, error) {
 	var err error
 	var ret *sql.Rows
-	if ds.db == nil {
-		cleanExit(errors.New("db is nil"))
-	}
-
 	for i := 0; i < MaxRetryNum; i++ {
 		ret, err = ds.db.Query(query, args...)
 		if err != nil {
