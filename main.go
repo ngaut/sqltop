@@ -26,12 +26,26 @@ var (
 	count = flag.Int("n", 50, "Number of process to show")
 )
 
+func InitDB() error {
+	globalDS = newDataSource(*user, *pwd, *host, *port)
+	if err := globalDS.Connect(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func main() {
 	flag.Parse()
-	if err := ui.Init(); err != nil {
-		panic(err)
+	if err := InitDB(); err != nil {
+		cleanExit(err)
 	}
-	defer ui.Close()
+	if err := ui.Init(); err != nil {
+		cleanExit(err)
+	}
+	defer func() {
+		ui.Close()
+		getDataSource().Close()
+	}()
 
 	refreshUI()
 }
@@ -52,14 +66,9 @@ type record struct {
 }
 
 func fetchProcessInfo() string {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/INFORMATION_SCHEMA", *user, *pwd, *host, *port)
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		cleanExit(err)
-	}
-	defer db.Close()
+	ds := getDataSource()
 	q := fmt.Sprintf("select ID, USER, HOST, DB, COMMAND, TIME, STATE, info from PROCESSLIST where command != 'Sleep' order by TIME desc limit %d", *count)
-	rows, err := db.Query(q)
+	rows, err := ds.Query(q)
 	if err != nil {
 		cleanExit(err)
 	}
@@ -112,6 +121,7 @@ func fetchProcessInfo() string {
 // refreshUI periodically refreshes the screen.
 func refreshUI() {
 	pg := newProcessListGrid()
+	//hotspots := newHotSpotGrids()
 
 	redraw := make(chan struct{})
 	go func() {
@@ -134,10 +144,12 @@ func refreshUI() {
 			if e.ID == "<Resize>" {
 				payload := e.Payload.(ui.Resize)
 				pg.OnResize(payload)
+				//hotspots.OnResize(payload)
 			}
 
 		case <-redraw:
 			pg.Render()
+			//hotspots.Render()
 		}
 	}
 }
