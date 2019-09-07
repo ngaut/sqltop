@@ -1,7 +1,7 @@
 package main
 
 import (
-	"flag"
+	"database/sql"
 	"fmt"
 	"log"
 	"os"
@@ -10,8 +10,7 @@ import (
 	"time"
 
 	ui "github.com/gizak/termui/v3"
-
-	"database/sql"
+	flag "github.com/spf13/pflag"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -19,11 +18,11 @@ import (
 const version = "0.1"
 
 var (
-	host  = flag.String("h", "127.0.0.1", "host")
-	pwd   = flag.String("p", "", "pwd")
-	user  = flag.String("u", "root", "user")
-	port  = flag.Int("P", 3306, "port")
-	count = flag.Int("n", 50, "Number of process to show")
+	host  = flag.StringP("host", "h", "127.0.0.1", "host")
+	pwd   = flag.StringP("password", "p", "", "pwd")
+	user  = flag.StringP("user", "u", "root", "user")
+	port  = flag.IntP("port", "P", 3306, "port")
+	count = flag.IntP("count", "n", 50, "Number of process to show")
 )
 
 func InitDB() error {
