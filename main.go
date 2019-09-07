@@ -8,7 +8,6 @@ import (
 	"time"
 
 	ui "github.com/gizak/termui/v3"
-	"github.com/juju/errors"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -26,7 +25,7 @@ var (
 func InitDB() error {
 	globalDS = newDataSource(*user, *pwd, *host, *port)
 	if err := globalDS.Connect(); err != nil {
-		return errors.Trace(err)
+		return err
 	}
 	return nil
 }
@@ -34,10 +33,10 @@ func InitDB() error {
 func main() {
 	flag.Parse()
 	if err := InitDB(); err != nil {
-		panic(err)
+		cleanExit(err)
 	}
 	if err := ui.Init(); err != nil {
-		panic(err)
+		cleanExit(err)
 	}
 	defer func() {
 		ui.Close()
@@ -62,7 +61,6 @@ func refreshUI() {
 		newProcessListController(),
 		//newHotSpotsController(),
 	}
-
 	redraw := make(chan struct{})
 	go func() {
 		for {

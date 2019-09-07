@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
-
-	"github.com/juju/errors"
 )
 
 type DataSource struct {
@@ -59,18 +57,18 @@ func (ds *DataSource) Connect() error {
 func (ds *DataSource) Query(query string, args ...interface{}) (*sql.Rows, error) {
 	var err error
 	var ret *sql.Rows
+
 	for i := 0; i < MaxRetryNum; i++ {
 		ret, err = ds.db.Query(query, args...)
 		if err != nil {
 			time.Sleep(500 * time.Millisecond)
 			ds.db.Close()
 			if err := ds.Connect(); err != nil {
-				return nil, errors.Trace(err)
+				return nil, err
 			}
-			continue
 		} else {
 			return ret, nil
 		}
 	}
-	return nil, err
+	return nil, nil
 }

@@ -57,6 +57,7 @@ func newHotSpotGrids() *HotSpotGrids {
 	termWidth, _ := ui.TerminalDimensions()
 	ret := &HotSpotGrids{}
 	offset := 0
+	// show top10 hot regions, which means we need 5 rows with 2 columns.
 	for i := 0; i < 5; i++ {
 		barGrid := ui.NewGrid()
 		barGrid.SetRect(0, offset, termWidth, offset+3)
@@ -67,7 +68,7 @@ func newHotSpotGrids() *HotSpotGrids {
 		g0.BarColor = ui.ColorYellow
 		g0.BorderStyle.Fg = ui.ColorWhite
 		g0.TitleStyle.Fg = ui.ColorWhite
-
+		// 2 columns
 		barGrid.Set(
 			ui.NewRow(1.0,
 				ui.NewCol(0.5, g0),
