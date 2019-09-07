@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+
 	ui "github.com/gizak/termui/v3"
 )
 
@@ -19,11 +20,10 @@ type ProcessListController struct {
 
 func newProcessListController() UIController {
 	ret := &ProcessListController{
-		grid: newProcessListGrid(),
+		grid: newProcessListGrid(0, 0),
 	}
 	return ret
 }
-
 
 func (c *ProcessListController) Render() {
 	c.grid.Render()
@@ -34,7 +34,7 @@ func (c *ProcessListController) OnResize(payload ui.Resize) {
 }
 
 func (c *ProcessListController) UpdateData() {
-	c.grid.SetText(c.fetchProcessInfo())	
+	c.grid.SetText(c.fetchProcessInfo())
 }
 
 func (c *ProcessListController) fetchProcessInfo() string {

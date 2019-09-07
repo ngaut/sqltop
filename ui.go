@@ -14,16 +14,17 @@ type UIController interface {
 type ProcessListGrid struct {
 	grid *ui.Grid
 	par  *widgets.Paragraph
+	x, y int // top, left
 }
 
-func newProcessListGrid() *ProcessListGrid {
+func newProcessListGrid(x, y int) *ProcessListGrid {
 	termWidth, termHeight := ui.TerminalDimensions()
 
 	par := widgets.NewParagraph()
 	par.Border = false
 
 	grid := ui.NewGrid()
-	grid.SetRect(0, 15, termWidth, termHeight)
+	grid.SetRect(x, y, termWidth, termHeight)
 	grid.Set(
 		ui.NewRow(1.0,
 			ui.NewCol(1.0, par),
@@ -32,6 +33,8 @@ func newProcessListGrid() *ProcessListGrid {
 	return &ProcessListGrid{
 		grid: grid,
 		par:  par,
+		x:    x,
+		y:    y,
 	}
 }
 
@@ -41,7 +44,7 @@ func (pg *ProcessListGrid) SetText(str string) {
 }
 
 func (pg *ProcessListGrid) OnResize(payload ui.Resize) {
-	pg.grid.SetRect(0, 15, payload.Width, payload.Height-15)
+	pg.grid.SetRect(pg.x, pg.y, payload.Width, payload.Height-15)
 	ui.Render(pg.grid)
 }
 
