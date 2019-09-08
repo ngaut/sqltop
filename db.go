@@ -53,9 +53,17 @@ func (ds *DataSource) Connect() error {
 	return nil
 }
 
+// make sure call Connect() before calling Query()
 func (ds *DataSource) Query(query string, args ...interface{}) (*sql.Rows, error) {
 	var err error
 	var ret *sql.Rows
+
+	if ds.db == nil {
+		err := ds.Connect()
+		if err != nil {
+			cleanExit(err)
+		}
+	}
 
 	for i := 0; i < MaxRetryNum; i++ {
 		ret, err = ds.db.Query(query, args...)
@@ -69,5 +77,6 @@ func (ds *DataSource) Query(query string, args ...interface{}) (*sql.Rows, error
 			return ret, nil
 		}
 	}
-	return nil, nil
+	// excees max retry, but still got error
+	return nil, err
 }

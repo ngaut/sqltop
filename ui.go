@@ -5,19 +5,26 @@ import (
 	"github.com/gizak/termui/v3/widgets"
 )
 
+type UIController interface {
+	Render()
+	OnResize(ui.Resize)
+	UpdateData()
+}
+
 type ProcessListGrid struct {
 	grid *ui.Grid
 	par  *widgets.Paragraph
+	x, y int // top, left
 }
 
-func newProcessListGrid() *ProcessListGrid {
+func newProcessListGrid(x, y int) *ProcessListGrid {
 	termWidth, termHeight := ui.TerminalDimensions()
 
 	par := widgets.NewParagraph()
 	par.Border = false
 
 	grid := ui.NewGrid()
-	grid.SetRect(0, 15, termWidth, termHeight)
+	grid.SetRect(x, y, termWidth, termHeight)
 	grid.Set(
 		ui.NewRow(1.0,
 			ui.NewCol(1.0, par),
@@ -26,6 +33,8 @@ func newProcessListGrid() *ProcessListGrid {
 	return &ProcessListGrid{
 		grid: grid,
 		par:  par,
+		x:    x,
+		y:    y,
 	}
 }
 
@@ -35,7 +44,7 @@ func (pg *ProcessListGrid) SetText(str string) {
 }
 
 func (pg *ProcessListGrid) OnResize(payload ui.Resize) {
-	pg.grid.SetRect(0, 15, payload.Width, payload.Height-15)
+	pg.grid.SetRect(pg.x, pg.y, payload.Width, payload.Height-15)
 	ui.Render(pg.grid)
 }
 
@@ -51,6 +60,7 @@ func newHotSpotGrids() *HotSpotGrids {
 	termWidth, _ := ui.TerminalDimensions()
 	ret := &HotSpotGrids{}
 	offset := 0
+	// show top10 hot regions, which means we need 5 rows with 2 columns.
 	for i := 0; i < 5; i++ {
 		barGrid := ui.NewGrid()
 		barGrid.SetRect(0, offset, termWidth, offset+3)
@@ -61,7 +71,7 @@ func newHotSpotGrids() *HotSpotGrids {
 		g0.BarColor = ui.ColorYellow
 		g0.BorderStyle.Fg = ui.ColorWhite
 		g0.TitleStyle.Fg = ui.ColorWhite
-
+		// 2 columns
 		barGrid.Set(
 			ui.NewRow(1.0,
 				ui.NewCol(0.5, g0),
