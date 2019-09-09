@@ -11,90 +11,45 @@ type UIController interface {
 	UpdateData()
 }
 
-type ProcessListGrid struct {
-	grid *ui.Grid
-	par  *widgets.Paragraph
-	x, y int // top, left
+type TextGrid struct {
+	grid   *ui.Grid
+	par    *widgets.Paragraph
+	x, y   int // top, left
+	height int
 }
 
-func newProcessListGrid(x, y int) *ProcessListGrid {
-	termWidth, termHeight := ui.TerminalDimensions()
+func newTextGrid(x, y, height int) *TextGrid {
+	termWidth, _ := ui.TerminalDimensions()
 
 	par := widgets.NewParagraph()
 	par.Border = false
 
 	grid := ui.NewGrid()
-	grid.SetRect(x, y, termWidth, termHeight)
+	grid.SetRect(x, y, termWidth, y+height)
 	grid.Set(
 		ui.NewRow(1.0,
 			ui.NewCol(1.0, par),
 		),
 	)
-	return &ProcessListGrid{
-		grid: grid,
-		par:  par,
-		x:    x,
-		y:    y,
+	return &TextGrid{
+		grid:   grid,
+		par:    par,
+		x:      x,
+		y:      y,
+		height: height,
 	}
 }
 
 // it's caller's duty to be threaded safe
-func (pg *ProcessListGrid) SetText(str string) {
-	pg.par.Text = str
+func (g *TextGrid) SetText(str string) {
+	g.par.Text = str
 }
 
-func (pg *ProcessListGrid) OnResize(payload ui.Resize) {
-	pg.grid.SetRect(pg.x, pg.y, payload.Width, payload.Height-15)
-	ui.Render(pg.grid)
+func (g *TextGrid) OnResize(payload ui.Resize) {
+	g.grid.SetRect(g.x, g.y, payload.Width, g.height)
+	ui.Render(g.grid)
 }
 
-func (pg *ProcessListGrid) Render() {
-	ui.Render(pg.grid)
-}
-
-type HotSpotGrids struct {
-	grids []*ui.Grid
-}
-
-func newHotSpotGrids() *HotSpotGrids {
-	termWidth, _ := ui.TerminalDimensions()
-	ret := &HotSpotGrids{}
-	offset := 0
-	// show top10 hot regions, which means we need 5 rows with 2 columns.
-	for i := 0; i < 5; i++ {
-		barGrid := ui.NewGrid()
-		barGrid.SetRect(0, offset, termWidth, offset+3)
-
-		g0 := widgets.NewGauge()
-		g0.Title = "Table.Test.Rec1 - Rec10"
-		g0.Percent = 75
-		g0.BarColor = ui.ColorYellow
-		g0.BorderStyle.Fg = ui.ColorWhite
-		g0.TitleStyle.Fg = ui.ColorWhite
-		// 2 columns
-		barGrid.Set(
-			ui.NewRow(1.0,
-				ui.NewCol(0.5, g0),
-				ui.NewCol(0.5, g0),
-			),
-		)
-		ret.grids = append(ret.grids, barGrid)
-		offset += 3
-	}
-	return ret
-}
-
-func (gs *HotSpotGrids) OnResize(payload ui.Resize) {
-	offset := 0
-	for _, grid := range gs.grids {
-		grid.SetRect(0, offset, payload.Width, offset+3)
-		ui.Render(grid)
-		offset += 3
-	}
-}
-
-func (gs *HotSpotGrids) Render() {
-	for _, grid := range gs.grids {
-		ui.Render(grid)
-	}
+func (g *TextGrid) Render() {
+	ui.Render(g.grid)
 }
