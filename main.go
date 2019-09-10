@@ -59,6 +59,7 @@ func cleanExit(err error) {
 func refreshUI() {
 	controllers := []UIController{
 		newProcessListController(),
+		newOverviewController(),
 		//newHotSpotsController(),
 	}
 	redraw := make(chan struct{})

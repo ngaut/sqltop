@@ -15,14 +15,14 @@ type ProcessRecord struct {
 }
 
 type ProcessListController struct {
-	grid *ProcessListGrid
+	grid *TextGrid
 }
 
 func newProcessListController() UIController {
-	ret := &ProcessListController{
-		grid: newProcessListGrid(0, 0),
+	_, termHeight := ui.TerminalDimensions()
+	return &ProcessListController{
+		grid: newTextGrid(0, 3, termHeight-3),
 	}
-	return ret
 }
 
 func (c *ProcessListController) Render() {
@@ -67,10 +67,11 @@ func (c *ProcessListController) fetchProcessInfo() string {
 		cleanExit(err)
 	}
 
-	info := "sqltop version 0.1"
-	info += "\nProcesses: %d total, running: %d,  using DB: %d\n"
-	text := fmt.Sprintf(info, totalProcesses, totalProcesses, len(usingDBs))
-	text += fmt.Sprintf("\n\nTop %d order by time desc:\n", *count)
+	// update overview info
+	Overview().Store(TOTAL_PROCESSES, totalProcesses)
+	Overview().Store(USING_DBS, len(usingDBs))
+
+	text := fmt.Sprintf("Top %d order by time desc:\n", *count)
 	text += fmt.Sprintf("%-6s  %-20s  %-20s  %-20s  %-7s  %-6s  %-8s  %-15s\n",
 		"ID", "USER", "HOST", "DB", "COMMAND", "TIME", "STATE", "SQL")
 
