@@ -14,24 +14,42 @@ import (
 
 const version = "0.1"
 
+type Conf struct {
+	Host             string
+	DBPwd            string
+	DBUser           string
+	Port             int
+	NumProcessToShow int
+}
+
 var (
 	host  = flag.StringP("host", "h", "127.0.0.1", "host")
 	pwd   = flag.StringP("password", "p", "", "pwd")
 	user  = flag.StringP("user", "u", "root", "user")
 	port  = flag.IntP("port", "P", 3306, "port")
 	count = flag.IntP("count", "n", 50, "Number of process to show")
+
+	cfg *Conf
 )
 
-func InitDB() error {
-	globalDS = newDataSource(*user, *pwd, *host, *port)
-	if err := globalDS.Connect(); err != nil {
-		return err
-	}
-	return nil
+func Config() *Conf {
+	return cfg
+}
+
+func InitConfig() {
+	flag.Parse()
+	cfg = &Conf{}
+
+	cfg.DBUser = *user
+	cfg.DBPwd = *pwd
+	cfg.Host = *host
+	cfg.Port = *port
+	cfg.NumProcessToShow = *count
 }
 
 func main() {
-	flag.Parse()
+	InitConfig()
+
 	if err := InitDB(); err != nil {
 		cleanExit(err)
 	}
@@ -43,6 +61,7 @@ func main() {
 		DB().Close()
 	}()
 
+	go refreshWorker()
 	refreshUI()
 }
 

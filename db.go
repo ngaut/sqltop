@@ -30,6 +30,15 @@ func newDataSource(user, pwd, host string, port int) *DataSource {
 	}
 }
 
+func InitDB() error {
+	cfg := Config()
+	globalDS = newDataSource(cfg.DBUser, cfg.DBPwd, cfg.Host, cfg.Port)
+	if err := globalDS.Connect(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func DB() *DataSource {
 	return globalDS
 }
