@@ -82,6 +82,10 @@ func refreshProcessList() error {
 	return nil
 }
 
+func refreshIOStat() error {
+	return nil
+}
+
 func refreshWorker() {
 	for {
 		refresh()
