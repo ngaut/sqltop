@@ -1,18 +1,11 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"strings"
 
 	ui "github.com/gizak/termui/v3"
 )
-
-type ProcessRecord struct {
-	id, time               int
-	user, host, command    string
-	dbName, state, sqlText sql.NullString
-}
 
 type ProcessListController struct {
 	grid *TextGrid
@@ -38,9 +31,8 @@ func (c *ProcessListController) UpdateData() {
 }
 
 func (c *ProcessListController) fetchProcessInfo() string {
-	ds := getDataSource()
 	q := fmt.Sprintf("select ID, USER, HOST, DB, COMMAND, TIME, STATE, info from PROCESSLIST where command != 'Sleep' order by TIME desc limit %d", *count)
-	rows, err := ds.Query(q)
+	rows, err := DB().Query(q)
 	if err != nil {
 		cleanExit(err)
 	}
@@ -68,8 +60,8 @@ func (c *ProcessListController) fetchProcessInfo() string {
 	}
 
 	// update overview info
-	Overview().Store(TOTAL_PROCESSES, totalProcesses)
-	Overview().Store(USING_DBS, len(usingDBs))
+	Stat().Store(TOTAL_PROCESSES, totalProcesses)
+	Stat().Store(USING_DBS, len(usingDBs))
 
 	text := fmt.Sprintf("Top %d order by time desc:\n", *count)
 	text += fmt.Sprintf("%-6s  %-20s  %-20s  %-20s  %-7s  %-6s  %-8s  %-15s\n",

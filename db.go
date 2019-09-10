@@ -30,7 +30,7 @@ func newDataSource(user, pwd, host string, port int) *DataSource {
 	}
 }
 
-func getDataSource() *DataSource {
+func DB() *DataSource {
 	return globalDS
 }
 

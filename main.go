@@ -40,7 +40,7 @@ func main() {
 	}
 	defer func() {
 		ui.Close()
-		getDataSource().Close()
+		DB().Close()
 	}()
 
 	refreshUI()
