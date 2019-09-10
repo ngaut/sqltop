@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	ui "github.com/gizak/termui/v3"
@@ -43,13 +44,14 @@ func (c *OverviewController) OnResize(payload ui.Resize) {
 }
 
 func (c *OverviewController) UpdateData() {
-	info := "sqltop version 0.1\n"
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "sqltop version 0.1\n")
 	if totalProcess, ok := Overview().Load(TOTAL_PROCESSES); ok {
-		info += fmt.Sprintf("Processes: %d total, running %d ", totalProcess, totalProcess)
+		fmt.Fprintf(&sb, "Processes: %d total, running %d ", totalProcess, totalProcess)
 	}
 	if usingDBs, ok := Overview().Load(USING_DBS); ok {
-		info += fmt.Sprintf("using DB: %d ", usingDBs)
+		fmt.Fprintf(&sb, "using DB: %d ", usingDBs)
 	}
-	info += "\n"
-	c.grid.SetText(info)
+	sb.WriteString("\n")
+	c.grid.SetText(sb.String())
 }
