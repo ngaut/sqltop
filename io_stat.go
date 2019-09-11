@@ -1,17 +1,38 @@
 package main
 
-import ui "github.com/gizak/termui/v3"
+import (
+	"fmt"
+	"strings"
 
-type IOStatGrid struct{}
-
-func (g *IOStatGrid) SetText(str string) {
-}
-
-func (g *IOStatGrid) OnResize(payload ui.Resize) {
-}
-
-func (g *IOStatGrid) Render() {
-}
+	ui "github.com/gizak/termui/v3"
+)
 
 type IOStatController struct {
+	grid *TextGrid
+}
+
+func newIOStatController() *IOStatController {
+	return &IOStatController{
+		grid: newTextGrid(0, 3, 15),
+	}
+}
+
+func (c *IOStatController) Render() {
+	c.grid.Render()
+}
+
+func (c *IOStatController) OnResize(payload ui.Resize) {
+	c.grid.OnResize(payload)
+}
+
+func (c *IOStatController) UpdateData() {
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "Top hotspots\n")
+	if list, ok := Stat().Load(TABLES_IO_STATUS); ok {
+		for _, r := range list.([]TableRegionStatus) {
+			fmt.Fprintf(&sb, "%s\n", r)
+		}
+	}
+	sb.WriteString("\n")
+	c.grid.SetText(sb.String())
 }
