@@ -30,7 +30,7 @@ var (
 						TIKV_REGION_STATUS 
 					WHERE
 						db_name != "INFORMATION_SCHEMA" AND db_name != "PERFORMANCE_SCHEMA" AND db_name != "mysql" 
-					GROUP BY table_name, index_name ORDER BY w DESC`
+					GROUP BY table_name, index_name ORDER BY w DESC LIMIT 10`
 )
 
 // stat keys
@@ -64,7 +64,7 @@ type TableRegionStatus struct {
 
 func (r TableRegionStatus) String() string {
 	return fmt.Sprintf("Table: %-20s Index: %-20s Write: %-10s Read: %-10s",
-		r.tableName.String, r.indexName.String, bytefmt.ByteSize(r.rbytes), bytefmt.ByteSize(r.wbytes))
+		r.tableName.String, r.indexName.String, bytefmt.ByteSize(r.wbytes), bytefmt.ByteSize(r.rbytes))
 }
 
 func refresh() {
@@ -119,6 +119,7 @@ func refreshIOStat() error {
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 	var records []TableRegionStatus
 	var totalRead, totalWrite uint64
 	for rows.Next() {
