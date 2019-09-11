@@ -79,7 +79,7 @@ func refreshUI() {
 	controllers := []UIController{
 		newProcessListController(),
 		newOverviewController(),
-		//newHotSpotsController(),
+		newIOStatController(),
 	}
 	redraw := make(chan struct{})
 	go func() {

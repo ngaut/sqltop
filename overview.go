@@ -13,7 +13,7 @@ type OverviewController struct {
 
 func newOverviewController() *OverviewController {
 	return &OverviewController{
-		grid: newTextGrid(0, 0, 4),
+		grid: newTextGrid(0, 0, 3),
 	}
 }
 

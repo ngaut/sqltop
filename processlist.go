@@ -2,9 +2,14 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	ui "github.com/gizak/termui/v3"
+)
+
+var (
+	re = regexp.MustCompile(`\r?\n`)
 )
 
 type ProcessListController struct {
@@ -14,7 +19,7 @@ type ProcessListController struct {
 func newProcessListController() UIController {
 	_, termHeight := ui.TerminalDimensions()
 	return &ProcessListController{
-		grid: newTextGrid(0, 3, termHeight-3),
+		grid: newTextGrid(0, 20, termHeight-20),
 	}
 }
 
@@ -40,6 +45,7 @@ func (c *ProcessListController) UpdateData() {
 				sqlText = r.sqlText.String
 				if len(sqlText) > 128 {
 					sqlText = sqlText[:128]
+					sqlText = re.ReplaceAllString(sqlText, " ")
 				}
 			}
 			fmt.Fprintf(&sb, "%-6d  %-20s  %-20s  %-20s  %-7s  %-6d  %-8s  %-15s\n",

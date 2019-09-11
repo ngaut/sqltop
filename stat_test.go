@@ -14,12 +14,11 @@ func (suite *StatTestSuite) SetupTest() {
 	// FIXME: hard-coded test env
 	cfg = &Conf{
 		Host:             "127.0.01",
-		Port:             4000,
+		Port:             4001,
 		DBUser:           "root",
 		DBPwd:            "",
 		NumProcessToShow: 10,
 	}
-
 	InitDB()
 }
 
@@ -35,6 +34,20 @@ func (suite *StatTestSuite) TestRefreshProcessList() {
 	suite.Equal(true, ok)
 	suite.Greater(usingDBs.(int), 0)
 }
+
+/* TODO
+func (suite *StatTestSuite) TestIOStat() {
+	err := refreshIOStat()
+
+	suite.Nil(err)
+
+	if list, ok := Stat().Load(TABLES_IO_STATUS); ok {
+		for _, r := range list.([]TableRegionStatus) {
+			fmt.Println(r)
+		}
+	}
+}
+*/
 
 func TestSuiteTestSuite(t *testing.T) {
 	suite.Run(t, new(StatTestSuite))
