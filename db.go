@@ -36,11 +36,21 @@ func InitDB() error {
 	if err := globalDS.Connect(); err != nil {
 		return err
 	}
-	return nil
+	return globalDS.Ping()
 }
 
 func DB() *DataSource {
 	return globalDS
+}
+
+func (ds *DataSource) Ping() error {
+	if ds.db == nil {
+		err := ds.Connect()
+		if err != nil {
+			cleanExit(err)
+		}
+	}
+	return ds.db.Ping()
 }
 
 func (ds *DataSource) Close() {
@@ -56,6 +66,8 @@ func (ds *DataSource) Connect() error {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/INFORMATION_SCHEMA", ds.user, ds.pwd, ds.host, ds.port)
 	var err error
 	ds.db, err = sql.Open("mysql", dsn)
+	ds.db.SetMaxIdleConns(10)
+	ds.db.SetMaxOpenConns(10)
 	if err != nil {
 		return err
 	}

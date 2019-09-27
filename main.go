@@ -50,10 +50,11 @@ func InitConfig() {
 func main() {
 	InitConfig()
 
-	if err := InitDB(); err != nil {
-		cleanExit(err)
-	}
 	if err := ui.Init(); err != nil {
+		log.Print(err)
+		os.Exit(-1)
+	}
+	if err := InitDB(); err != nil {
 		cleanExit(err)
 	}
 	defer func() {
