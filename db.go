@@ -62,7 +62,7 @@ func InitDB() error {
 	if err != nil {
 		return err
 	}
-	t, err := globalDS.GetDBType()
+	t, err := globalDS.getDBType()
 	if err != nil {
 		return err
 	}
@@ -88,25 +88,26 @@ func (ds *DataSource) Ping() error {
 	return ds.db.Ping()
 }
 
-func (ds *DataSource) GetDBType() (DBType, error) {
+func (ds *DataSource) getDBType() (DBType, error) {
 	r, err := ds.Query(`SHOW VARIABLES LIKE "version"`)
 	if err != nil {
 		return TypeUnknown, err
 	}
-
 	defer r.Close()
-	r.Next()
 
-	var varName, versionText string
-	err = r.Scan(&varName, &versionText)
-	if err != nil {
-		return TypeUnknown, err
-	}
+	if r.Next() {
+		var varName, versionText string
+		err = r.Scan(&varName, &versionText)
+		if err != nil {
+			return TypeUnknown, err
+		}
 
-	if strings.Contains(versionText, "TiDB") {
-		return TypeTiDB, nil
+		if strings.Contains(versionText, "TiDB") {
+			return TypeTiDB, nil
+		}
+		return TypeMySQL, nil
 	}
-	return TypeMySQL, nil
+	return TypeUnknown, fmt.Errorf("unsupported DB")
 }
 
 func (ds *DataSource) Close() error {

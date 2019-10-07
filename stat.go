@@ -123,7 +123,7 @@ func refreshIOStat() error {
 		return err
 	}
 	defer rows.Close()
-	var records []TableRegionStatus
+	var records TableRegionStatusList
 	var totalRead, totalWrite uint64
 	for rows.Next() {
 		var r TableRegionStatus

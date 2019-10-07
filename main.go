@@ -69,7 +69,11 @@ func main() {
 	go refreshWorker()
 
 	// if backend is MySQL
-	refreshUI(newMysqlLayout())
+	if DB().Type() == TypeMySQL {
+		refreshUI(newMysqlLayout(newOverviewWidget(), newProcessListWidget()))
+	} else {
+		refreshUI(newTiDBLayout(newOverviewWidget(), newProcessListWidget(), newIOStatWidget()))
+	}
 
 }
 
@@ -93,8 +97,8 @@ func refreshUI(layout Layout) {
 			if err := layout.Refresh(); err != nil {
 				cleanExit(err)
 			}
-			// update every 2 seconds
-			time.Sleep(2 * time.Second)
+			// update every 1 seconds
+			time.Sleep(1 * time.Second)
 		}
 	}()
 

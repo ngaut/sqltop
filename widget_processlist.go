@@ -10,14 +10,13 @@ var (
 	re = regexp.MustCompile(`\r?\n`)
 )
 
-type ProcessListController struct {
+type ProcessListWidget struct{}
+
+func newProcessListWidget() Widget {
+	return &ProcessListWidget{}
 }
 
-func newProcessListController() *ProcessListController {
-	return &ProcessListController{}
-}
-
-func (c *ProcessListController) GenUIContent() string {
+func (c *ProcessListWidget) GetText() string {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "Top %d order by time desc:\n", Config().NumProcessToShow)
 	fmt.Fprintf(&sb, "%-6s  %-20s  %-20s  %-20s  %-7s  %-6s  %-8s  %-15s\n",

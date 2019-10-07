@@ -10,11 +10,14 @@ import (
 type mysqlLayout struct {
 	rootGrid *ui.Grid
 
-	processListWidget *widgets.Paragraph
-	overviewWidget    *widgets.Paragraph
+	processListWidget Widget
+	overviewWidget    Widget
+
+	processList *widgets.Paragraph
+	overview    *widgets.Paragraph
 }
 
-func newMysqlLayout() Layout {
+func newMysqlLayout(overviewWidget Widget, processListWidget Widget) Layout {
 	termWidth, termHeight := ui.TerminalDimensions()
 	parent := ui.NewGrid()
 	parent.SetRect(1, 3, termWidth-1, termHeight)
@@ -34,34 +37,31 @@ func newMysqlLayout() Layout {
 	)
 
 	ret := &mysqlLayout{
-		rootGrid:          parent,
-		processListWidget: p,
-		overviewWidget:    o,
+		rootGrid:    parent,
+		processList: p,
+		overview:    o,
+
+		processListWidget: processListWidget,
+		overviewWidget:    overviewWidget,
 	}
 
 	return ret
 }
 
-func (l *mysqlLayout) setOverviewText(str string) {
-	l.overviewWidget.Text = fmt.Sprintf("sqltop v0.2 [%s] %s\n", DB().Type(), str)
-}
-
-func (l *mysqlLayout) setProcesslistText(str string) {
-	l.processListWidget.Text = str
-}
-
 func (l *mysqlLayout) Refresh() error {
+	l.overview.Text = fmt.Sprintf("sqltop v0.2\t Mode: %s, %s\n", DB().Type(), l.overviewWidget.GetText())
+	l.processList.Text = l.processListWidget.GetText()
 	return nil
 }
 
 func (l *mysqlLayout) Render() {
-	ui.Render(l.overviewWidget)
+	ui.Render(l.overview)
 	ui.Render(l.rootGrid)
 }
 
 func (l *mysqlLayout) OnResize(payload interface{}) {
 	resize := payload.(ui.Resize)
 	l.rootGrid.SetRect(1, 3, resize.Width-1, resize.Height)
-	l.overviewWidget.SetRect(1, 1, resize.Width-1, 2)
+	l.overview.SetRect(1, 1, resize.Width-1, 2)
 	l.Render()
 }
