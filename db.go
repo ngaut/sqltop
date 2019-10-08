@@ -3,14 +3,36 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 )
+
+type DBType int
+
+const (
+	TypeUnknown DBType = iota
+	TypeMySQL
+	TypeTiDB
+)
+
+func (t DBType) String() string {
+	switch t {
+	case TypeMySQL:
+		return "MySQL"
+	case TypeTiDB:
+		return "TiDB"
+	default:
+		return "Unknown"
+	}
+}
 
 type DataSource struct {
 	db              *sql.DB
 	dsn             string
 	user, pwd, host string
 	port            int
+
+	dbType DBType
 }
 
 const (
@@ -36,30 +58,66 @@ func InitDB() error {
 	if err := globalDS.Connect(); err != nil {
 		return err
 	}
-	return globalDS.Ping()
+	err := globalDS.Ping()
+	if err != nil {
+		return err
+	}
+	t, err := globalDS.getDBType()
+	if err != nil {
+		return err
+	}
+	globalDS.dbType = t
+	return nil
 }
 
 func DB() *DataSource {
 	return globalDS
 }
 
+func (ds *DataSource) Type() DBType {
+	return ds.dbType
+}
+
 func (ds *DataSource) Ping() error {
 	if ds.db == nil {
 		err := ds.Connect()
 		if err != nil {
-			cleanExit(err)
+			return err
 		}
 	}
 	return ds.db.Ping()
 }
 
-func (ds *DataSource) Close() {
+func (ds *DataSource) getDBType() (DBType, error) {
+	r, err := ds.Query(`SHOW VARIABLES LIKE "version"`)
+	if err != nil {
+		return TypeUnknown, err
+	}
+	defer r.Close()
+
+	if r.Next() {
+		var varName, versionText string
+		err = r.Scan(&varName, &versionText)
+		if err != nil {
+			return TypeUnknown, err
+		}
+
+		if strings.Contains(versionText, "TiDB") {
+			return TypeTiDB, nil
+		}
+		return TypeMySQL, nil
+	}
+	return TypeUnknown, fmt.Errorf("unsupported DB")
+}
+
+func (ds *DataSource) Close() error {
 	if ds.db != nil {
 		if err := ds.db.Close(); err != nil {
-			cleanExit(err)
+			return err
 		}
 		ds.db = nil
 	}
+	return nil
 }
 
 func (ds *DataSource) Connect() error {
@@ -68,6 +126,7 @@ func (ds *DataSource) Connect() error {
 	ds.db, err = sql.Open("mysql", dsn)
 	ds.db.SetMaxIdleConns(10)
 	ds.db.SetMaxOpenConns(10)
+
 	if err != nil {
 		return err
 	}
@@ -82,7 +141,7 @@ func (ds *DataSource) Query(query string, args ...interface{}) (*sql.Rows, error
 	if ds.db == nil {
 		err := ds.Connect()
 		if err != nil {
-			cleanExit(err)
+			return nil, err
 		}
 	}
 

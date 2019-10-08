@@ -54,16 +54,27 @@ func main() {
 		log.Print(err)
 		os.Exit(-1)
 	}
+
 	if err := InitDB(); err != nil {
 		cleanExit(err)
 	}
 	defer func() {
 		ui.Close()
-		DB().Close()
+		err := DB().Close()
+		if err != nil {
+			cleanExit(err)
+		}
 	}()
 
 	go refreshWorker()
-	refreshUI()
+
+	// if backend is MySQL
+	if DB().Type() == TypeMySQL {
+		refreshUI(newMysqlLayout(newOverviewWidget(), newProcessListWidget()))
+	} else {
+		refreshUI(newTiDBLayout(newOverviewWidget(), newProcessListWidget(), newIOStatWidget()))
+	}
+
 }
 
 func cleanExit(err error) {
@@ -76,22 +87,18 @@ func cleanExit(err error) {
 }
 
 // refreshUI periodically refreshes the screen.
-func refreshUI() {
-	controllers := []UIController{
-		newProcessListController(),
-		newOverviewController(),
-		newIOStatController(),
-	}
+func refreshUI(layout Layout) {
 	redraw := make(chan struct{})
 	go func() {
 		for {
-			for _, c := range controllers {
-				c.UpdateData()
-			}
-
 			redraw <- struct{}{}
-			// update every 2 seconds
-			time.Sleep(2 * time.Second)
+
+			// update data for UI
+			if err := layout.Refresh(); err != nil {
+				cleanExit(err)
+			}
+			// update every 1 seconds
+			time.Sleep(1 * time.Second)
 		}
 	}()
 
@@ -103,15 +110,12 @@ func refreshUI() {
 				cleanExit(nil)
 			}
 			if e.ID == "<Resize>" {
-				for _, c := range controllers {
-					c.OnResize(e.Payload.(ui.Resize))
-				}
+				layout.OnResize(e.Payload.(ui.Resize))
 			}
 
 		case <-redraw:
-			for _, c := range controllers {
-				c.Render()
-			}
+			layout.Render()
 		}
 	}
+
 }

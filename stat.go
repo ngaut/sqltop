@@ -73,8 +73,11 @@ func refresh() {
 		cleanExit(err)
 	}
 
-	if err := refreshIOStat(); err != nil {
-		cleanExit(err)
+	// TiDB only-feature
+	if DB().Type() == TypeTiDB {
+		if err := refreshIOStat(); err != nil {
+			cleanExit(err)
+		}
 	}
 }
 
@@ -120,7 +123,7 @@ func refreshIOStat() error {
 		return err
 	}
 	defer rows.Close()
-	var records []TableRegionStatus
+	var records TableRegionStatusList
 	var totalRead, totalWrite uint64
 	for rows.Next() {
 		var r TableRegionStatus
