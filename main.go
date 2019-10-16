@@ -49,6 +49,7 @@ func InitConfig() {
 
 func main() {
 	InitConfig()
+	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)
 
 	if err := ui.Init(); err != nil {
 		log.Print(err)
